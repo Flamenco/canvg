@@ -65,7 +65,8 @@
 		if (target.svg != null) target.svg.stop();
 		var svg = build(opts || {});
 		// on i.e. 8 for flash canvas, we can't assign the property so check for it
-		if (!(target.childNodes.length == 1 && target.childNodes[0].nodeName == 'OBJECT')) target.svg = svg;
+		//ss We do not know if this needs to be commented out
+		//if (!(target.childNodes.length == 1 && target.childNodes[0].nodeName == 'OBJECT')) target.svg = svg;
 
 		var ctx = target.getContext('2d');
 		if (typeof s.documentElement != 'undefined') {
@@ -162,8 +163,10 @@
 
 		svg.log = function(msg) {};
 		if (svg.opts['log'] == true && typeof console != 'undefined') {
-			svg.log = function(msg) { console.log(msg); };
+            svg.log = function (msg) {
+                console.log(msg);
 		};
+        };
 
 		// globals
 		svg.init = function(ctx) {
@@ -281,7 +284,9 @@
 				// augment the current color value with the opacity
 				svg.Property.prototype.addOpacity = function(opacityProp) {
 					var newValue = this.value;
-					if (opacityProp.value != null && opacityProp.value != '' && typeof this.value == 'string') { // can only add opacity to colors, not patterns
+
+            //ss handle undefined value string
+            if (opacityProp.value != null && opacityProp.value != '' && opacityProp.value != 'undefined' && typeof this.value == 'string') { // can only add opacity to colors, not patterns
 						var color = new RGBColor(this.value);
 						if (color.ok) {
 							newValue = 'rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + opacityProp.numValue() + ')';
@@ -431,8 +436,11 @@
 					else if (!set.fontVariant && that.Variants.indexOf(d[i]) != -1) { if (d[i] != 'inherit') f.fontVariant = d[i]; set.fontStyle = set.fontVariant = true;	}
 					else if (!set.fontWeight && that.Weights.indexOf(d[i]) != -1) {	if (d[i] != 'inherit') f.fontWeight = d[i]; set.fontStyle = set.fontVariant = set.fontWeight = true; }
 					else if (!set.fontSize) { if (d[i] != 'inherit') f.fontSize = d[i].split('/')[0]; set.fontStyle = set.fontVariant = set.fontWeight = set.fontSize = true; }
-					else { if (d[i] != 'inherit') ff += d[i]; }
-				} if (ff != '') f.fontFamily = ff;
+                    else {
+                        if (d[i] != 'inherit') ff += d[i];
+                    }
+                }
+                if (ff != '') f.fontFamily = ff;
 				return f;
 			}
 		});
@@ -1078,7 +1086,12 @@
 				ctx.lineJoin = 'miter';
 				ctx.miterLimit = 4;
 				if (typeof ctx.font != 'undefined' && typeof window.getComputedStyle != 'undefined') {
-					ctx.font = window.getComputedStyle(ctx.canvas).getPropertyValue('font');
+                    //ss
+                    var canvas = ctx.canvas;
+                    if (!canvas) {
+                        canvas = document.body;
+                    }
+                    ctx.font = window.getComputedStyle(canvas).getPropertyValue('font');
 				}
 
 				this.baseSetContext(ctx);
@@ -2647,12 +2660,35 @@
 			this.base(node);
 
 			this.apply = function(ctx) {
+                //ss
+                // our mock PDF context cannot be sent into CanvasRenderingContext2D.prototype.beginPath
+                ctx.beginPath();
+                for (var i = 0; i < this.children.length; i++) {
+                    var child = this.children[i];
+                    if (typeof child.path != 'undefined') {
+                        var transform = null;
+                        if (child.style('transform', false, true).hasValue()) {
+                            transform = new svg.Transform(child.style('transform', false, true).value);
+                            transform.apply(ctx);
+                        }
+                        child.path(ctx);
+                        if (transform) {
+                            transform.unapply(ctx);
+                        }
+                    }
+                }
+                ctx.closePath();
+                ctx.clip();
+                return;
+                //ss end
+
 				var oldBeginPath = CanvasRenderingContext2D.prototype.beginPath;
 				CanvasRenderingContext2D.prototype.beginPath = function () { };
 
 				var oldClosePath = CanvasRenderingContext2D.prototype.closePath;
 				CanvasRenderingContext2D.prototype.closePath = function () { };
 
+                try {
 				oldBeginPath.call(ctx);
 				for (var i=0; i<this.children.length; i++) {
 					var child = this.children[i];
@@ -2669,7 +2705,9 @@
 				}
 				oldClosePath.call(ctx);
 				ctx.clip();
-
+                } catch (e) {
+                    console.log(e)
+                }
 				CanvasRenderingContext2D.prototype.beginPath = oldBeginPath;
 				CanvasRenderingContext2D.prototype.closePath = oldClosePath;
 			}
@@ -2916,7 +2954,8 @@
 			var isFirstRender = true;
 			var draw = function() {
 				svg.ViewPort.Clear();
-				if (ctx.canvas.parentNode) svg.ViewPort.SetCurrent(ctx.canvas.parentNode.clientWidth, ctx.canvas.parentNode.clientHeight);
+				//ss We do not know if this needs to be commented out
+				//if (ctx.canvas.parentNode) svg.ViewPort.SetCurrent(ctx.canvas.parentNode.clientWidth, ctx.canvas.parentNode.clientHeight);
 
 				if (svg.opts['ignoreDimensions'] != true) {
 					// set canvas size
@@ -2929,8 +2968,10 @@
 						ctx.canvas.style.height = ctx.canvas.height + 'px';
 					}
 				}
-				var cWidth = ctx.canvas.clientWidth || ctx.canvas.width;
-				var cHeight = ctx.canvas.clientHeight || ctx.canvas.height;
+				//ss We do not know if this needs to be commented out
+                // @TODO: jsPDF modified this
+                var cWidth = 100;//ctx.canvas.clientWidth || ctx.canvas.width;
+                var cHeight = 100; //ctx.canvas.clientHeight || ctx.canvas.height;
 				if (svg.opts['ignoreDimensions'] == true && e.style('width').hasValue() && e.style('height').hasValue()) {
 					cWidth = e.style('width').toPixels('x');
 					cHeight = e.style('height').toPixels('y');
