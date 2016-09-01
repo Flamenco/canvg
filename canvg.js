@@ -2970,8 +2970,8 @@
 				}
 				//ss We do not know if this needs to be commented out
                 // @TODO: jsPDF modified this
-                var cWidth = 100;//ctx.canvas.clientWidth || ctx.canvas.width;
-                var cHeight = 100; //ctx.canvas.clientHeight || ctx.canvas.height;
+                var cWidth = ctx.canvas.clientWidth || ctx.canvas.width;
+                var cHeight = ctx.canvas.clientHeight || ctx.canvas.height;
 				if (svg.opts['ignoreDimensions'] == true && e.style('width').hasValue() && e.style('height').hasValue()) {
 					cWidth = e.style('width').toPixels('x');
 					cHeight = e.style('height').toPixels('y');
