@@ -1086,12 +1086,13 @@
 				ctx.lineJoin = 'miter';
 				ctx.miterLimit = 4;
 				if (typeof ctx.font != 'undefined' && typeof window.getComputedStyle != 'undefined') {
-                    //ss
-                    var canvas = ctx.canvas;
-                    if (!canvas) {
-                        canvas = document.body;
-                    }
-                    ctx.font = window.getComputedStyle(canvas).getPropertyValue('font');
+					//ss
+					if (!ctx.canvas) {
+						ctx.font = window.getComputedStyle(document.body).getPropertyValue('font');
+					} else {
+						ctx.font = window.getComputedStyle(ctx.canvas).getPropertyValue('font');
+					}
+					//ss end
 				}
 
 				this.baseSetContext(ctx);
@@ -2972,14 +2973,23 @@
 				//ss
                 var cWidth;
                 var cHeight;
-				try {
+				if (ctx.canvas) {
 					cWidth = ctx.canvas.clientWidth || ctx.canvas.width;
 					cHeight = ctx.canvas.clientHeight || ctx.canvas.height;
-				} catch (e) {
-					console.warn('canvas width and/or height not set.  defaults used.');
+				} else if (ctx._canvas) {
+					try {
+						cWidth = ctx._canvas.width;
+						cHeight = ctx._canvas.height;
+					}
+					catch (e) {
+					}
+				}
+                if (!cWidth || ! cHeight) {
+                    console.warn('Canvas width and/or height not set.  Defaults used.');
 					cWidth = 100;
 					cHeight = 100;
 				}
+				//ss end
 
 				if (svg.opts['ignoreDimensions'] == true && e.style('width').hasValue() && e.style('height').hasValue()) {
 					cWidth = e.style('width').toPixels('x');
