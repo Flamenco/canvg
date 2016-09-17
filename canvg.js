@@ -2968,8 +2968,19 @@
 						ctx.canvas.style.height = ctx.canvas.height + 'px';
 					}
 				}
-                var cWidth = ctx.canvas.clientWidth || ctx.canvas.width;
-                var cHeight = ctx.canvas.clientHeight || ctx.canvas.height;
+
+				//ss
+                var cWidth;
+                var cHeight;
+				try {
+					cWidth = ctx.canvas.clientWidth || ctx.canvas.width;
+					cHeight = ctx.canvas.clientHeight || ctx.canvas.height;
+				} catch (e) {
+					console.warn('canvas width and/or height not set.  defaults used.');
+					cWidth = 100;
+					cHeight = 100;
+				}
+
 				if (svg.opts['ignoreDimensions'] == true && e.style('width').hasValue() && e.style('height').hasValue()) {
 					cWidth = e.style('width').toPixels('x');
 					cHeight = e.style('height').toPixels('y');
